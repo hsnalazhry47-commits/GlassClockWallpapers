@@ -2,9 +2,9 @@
 name: Build Glass Clock APK
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,15 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Find and extract project ZIP
+      - name: Extract project
         run: |
-          ARCHIVE=$(find . -maxdepth 1 -name '*.zip' | head -n 1)
-          if [ -z "$ARCHIVE" ]; then
-            echo "Project ZIP not found"
-            exit 1
-          fi
-          mkdir source
-          unzip -q "$ARCHIVE" -d source
+          unzip -q GlassClock-Source-Download.zip -d project
 
       - uses: actions/setup-java@v4
         with:
@@ -33,19 +27,16 @@ jobs:
       - uses: android-actions/setup-android@v3
 
       - name: Install Android SDK
-        run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
 
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
       - name: Build APK
-        working-directory: source
-        run: gradle :app:copyGlassClockDebugApk --no-daemon
+        run: gradle -p project :app:copyGlassClockDebugApk --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
           name: glass-clock-debug-apk
-          path: source/build/outputs/apk/glass-clock-debug.apk
-          if-no-files-found: error
-
+          path: project/build/outputs/apk/glass-clock-debug.apk
